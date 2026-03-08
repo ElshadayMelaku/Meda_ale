@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PLAYER
+  OWNER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentProvider {
+  STRIPE
+  CHAPA
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String
+  role         UserRole  @default(PLAYER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
+  ownedCourts  Court[]   @relation("CourtOwner")
+}
+
+model Court {
+  id           String    @id
+  name         String
+  description  String?
+  location     String
+  pricePerHour Int
+  imageUrl     String?
+  isActive     Boolean   @default(true)
+  ownerId      String?
+  owner        User?     @relation("CourtOwner", fields: [ownerId], references: [id])
+  bookings     Booking[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  userId        String
+  courtId       String
+  teamId        String?
+  startTime     DateTime
+  endTime       DateTime
+  totalPrice    Int
+  status        BookingStatus @default(PENDING)
+  paymentMethod String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userId], references: [id])
+  court         Court         @relation(fields: [courtId], references: [id])
+  payment       Payment?
+
+  @@index([courtId, startTime, endTime])
+  @@index([userId, createdAt])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  bookingId   String        @unique
+  provider    PaymentProvider
+  status      PaymentStatus @default(PENDING)
+  amount      Int
+  externalRef String?
+  checkoutUrl String?
+  rawResponse Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  booking     Booking       @relation(fields: [bookingId], references: [id])
+}

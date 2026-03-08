@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from 'next/font/google'
 import "./globals.css";
+import { Navbar } from '@/components/layout/Navbar'
+import { AuthSessionProvider } from '@/components/providers/AuthSessionProvider'
 
-
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "meda booking application",
-  description: "Meda Booking Application",
+  title: "PitchPro - Football Court Booking",
+  description: "Book football courts and manage your teams",
 };
 
 export default function RootLayout({
@@ -16,9 +18,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-      >
-        {children}
+      <body className={inter.className}>
+        <AuthSessionProvider>
+          <Navbar />
+          <main className="min-h-screen bg-gray-50">
+            {children}
+          </main>
+        </AuthSessionProvider>
       </body>
     </html>
   );
