@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./thepitch-backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    volumes:
+      - sqlite_data:/rails/storage
+    environment:
+      - RAILS_ENV=production
+      # Secret key is required for rails production. This simplifies the setup.
+      - SECRET_KEY_BASE=dummy_development_secret_key_base_for_docker_compose_demo
+      # The database URL for SQLite needs to be on a persisted volume
+      - DATABASE_URL=sqlite3:///rails/storage/production.sqlite3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Pass the backend URL at build time for NEXT_PUBLIC injection
+        - NEXT_PUBLIC_API_URL=http://localhost:3000
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  sqlite_data:
